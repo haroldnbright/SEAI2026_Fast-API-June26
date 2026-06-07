@@ -3,7 +3,7 @@ User Profile.
 This is a test program to understand how we can use pydantic.
 '''
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator, computed_field
 from datetime import date
 
 class UserProfile(BaseModel):
@@ -13,6 +13,7 @@ class UserProfile(BaseModel):
     age: int = Field(ge=18, le=120) #use of greater and less than
     rating: float = Field(ge=0.0, le=5.0) #use of greater and less than
     date_of_birth: date
+    subjects: dict[str, float] = Field(default_factory=dict)  # {"Math": 85.0, "Science": 90.0}
 
     #custom validation for username
     @field_validator('username')
@@ -37,7 +38,23 @@ class UserProfile(BaseModel):
         if abs(calculated_age - self.age) > 1:
             raise ValueError(f'Age {self.age} does not match date of birth (expected ~{calculated_age})')
         return self
-    
+
+    @computed_field
+    @property
+    def average_marks(self) -> float:
+        if not self.subjects:
+            return 0.0
+        return round(sum(self.subjects.values()) / len(self.subjects), 2)
+
+    @computed_field
+    @property
+    def grade(self) -> str:
+        avg = self.average_marks
+        if avg >= 90: return "A"
+        elif avg >= 75: return "B"
+        elif avg >= 60: return "C"
+        elif avg >= 45: return "D"
+        else: return "F"
 
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -123,3 +140,24 @@ except ValidationError as e:
 
 
 print('-'*100)
+
+# 8. computed field
+u = UserProfile(
+    user_id=1,
+    username="alice",
+    email="alice@example.com",
+    age=27,
+    rating=4.5,
+    date_of_birth=date(1999, 5, 10),
+    subjects={
+        "Math": 88.0,
+        "Science": 91.0,
+        "English": 74.0,
+        "History": 60.0
+    }
+)
+
+print(u.average_marks)  # 78.25
+print(u.grade)          # B
+print(u)
+#print(u.model_dump())
