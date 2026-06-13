@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from enum import Enum
 
 app = FastAPI()
@@ -120,3 +120,40 @@ def sample_api(value1: int, value2: str):
     }
 
 # POST / PUT / PATCH / DELETE.
+
+def verify_token(token: str):
+    # verify the token provided by the user.
+    if len(token) < 5:
+        # Invalid token
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    
+    print("Token Valid.")
+
+# DRY - Don't Repeat Yourself
+# When a user clicks on "My Orders" on Amazon -> User can see all the orders they have placed till now. 
+# get_all_orders has a dependency on verify_token function.
+# So, instead of calling the dependency manually, we can use Dependency Injection.
+@app.get("/myorders/{token}")
+def get_all_orders(token: str = Depends(verify_token)):
+    return "All order details"
+
+
+# def cancel_order(order_id: str, token: str):
+
+# HTTP Status Codes
+# 200 - success
+# 404 - Not Found
+# 401 - Unauthorized
+# 500 - Internal Server Error
+# 502 - Bad Gateway
+
+# If there's a Dependency with return values.
+def pagination(page_number: int = 9, limit: int = 20):
+    return {"page_number" : page_number, "limit" : limit}
+
+# list_products function has a dependency on pagination function.
+
+# http://127.0.0.1:8000/lists -> list_products(page: {"page_number" : page_number, "limit" : limit})
+@app.get("/lists")
+def list_products(page: dict = Depends(pagination)):
+    return {"page_number" : page["page_number"], "limit" : page["limit"]}
