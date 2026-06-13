@@ -1,7 +1,17 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from enum import Enum
 
 app = FastAPI()
+
+# allow_origins=[*] => Allow Cross-Origin traffic from everywhere.
+# In development environment we can use * in list of allow_origins,
+# But in production we only add the list of trusted origins in allow_origins.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:3000"],
+    allow_methods=["*"]
+)
 
 # Type of APIs -> Create (POST) / Read (GET) / Update (PUT/PATCH) / Delete (DELETE)
 # CRUD Operations
@@ -157,3 +167,22 @@ def pagination(page_number: int = 9, limit: int = 20):
 @app.get("/lists")
 def list_products(page: dict = Depends(pagination)):
     return {"page_number" : page["page_number"], "limit" : page["limit"]}
+
+# Middleware Implementation
+
+# asynchronous -> runs in background and in parallel
+
+@app.middleware("http")
+async def sample_middleware(request: Request, call_next):
+    print("Base URL: ", request.base_url)
+    path_param = request.path_params
+
+    # We can perform some validation on path_param
+
+    # Once the task of middleware is done, we can use call_next to send the request further.
+    # await keyword in Python pauses the execution of asynchronous function until the awaited result is ready.
+    response = await call_next(request)
+    
+    return response
+
+# Task - Try implementing a middleware for response.
