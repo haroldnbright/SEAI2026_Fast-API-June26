@@ -25,6 +25,13 @@ def get_user_by_id(input_user_id: int):
         result = conn.execute(query).first()
         return result
 
+# def get_user_by_username(input_username: str):
+#     with engine.connect() as conn:
+#         # select * from users where id = input_user_id
+#         query = select(users).where(users.c.username == input_username)
+#         result = conn.execute(query).first()
+#         return result
+
 def get_all_users():
     with engine.connect() as conn:
         # select * from users
